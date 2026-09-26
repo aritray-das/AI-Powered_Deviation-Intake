@@ -23,7 +23,7 @@ import fitz  # PyMuPDF
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from app.ai.pipeline import run_pipeline
+from app.ai.pipeline import run_pipeline, run_edit_interaction
 from app.database import get_db
 from app.models import Deviation
 from app.schemas import (
@@ -34,6 +34,8 @@ from app.schemas import (
     ExtractedFields,
     PDFExtractResponse,
     ProcessTextRequest,
+    EditInteractionRequest,
+    EditInteractionResponse,
 )
 
 router = APIRouter()
@@ -199,6 +201,43 @@ async def process_pdf(file: UploadFile = File(...)):
     raw_text, _ = _extract_text_from_pdf_upload(content, file.filename)
     result = run_pipeline(raw_text)
     return _pipeline_result_to_schema(result)
+
+
+# ── POST /deviations/edit ──────────────────────────────────────────────────────
+
+@router.post(
+    "/deviations/edit",
+    response_model=EditInteractionResponse,
+    summary="Parse a natural language correction and update the deviation form",
+    tags=["AI Processing"],
+)
+def edit_deviation_interaction(body: EditInteractionRequest):
+    """
+    Accepts a user's natural language correction and the current state of the form.
+    Returns the specific fields updated, a confirmation reply, and potentially
+    recalculated risk assessment fields if the change was risk-relevant.
+    """
+    message = body.message.strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Edit message must not be empty.")
+
+    result = run_edit_interaction(message, body.current_state)
+
+    if result.get("error"):
+        raise HTTPException(
+            status_code=500,
+            detail="The AI pipeline encountered an error while processing the edit. "
+                   "Please try again or contact support."
+        )
+
+    # Combine updated extracted and assessment into one flat dict for the frontend
+    updated_state = {**(result.get("extracted") or {}), **(result.get("assessment") or {})}
+
+    return EditInteractionResponse(
+        updated_state=updated_state,
+        reply=result.get("edit_reply") or "I have processed your request.",
+        fields_changed=result.get("fields_changed") or []
+    )
 
 
 

@@ -119,3 +119,45 @@ assess_prompt = ChatPromptTemplate.from_messages([
     ("system", ASSESS_SYSTEM),
     ("human",  ASSESS_HUMAN),
 ])
+
+
+# ── Node 3: Edit Interaction ───────────────────────────────────────────────────
+
+EDIT_SYSTEM = """\
+You are a pharmaceutical QA AI assistant. The user is reviewing a deviation form and has sent a chat message to correct or update some fields.
+Your task is to parse their message against the current form state and determine exactly which fields need to change.
+
+Rules:
+1. Return ONLY the specific fields that are changing. Do not return the entire form.
+2. If the user's message is ambiguous, doesn't relate to any known fields, or asks a general question, do not update any fields. Instead, use the 'reply' field to ask for clarification or answer the question.
+3. If the user requests a value outside allowed enums (e.g., Severity "Extreme"), map it to the closest valid enum if possible. If you cannot map it, do not change the field and use the reply to ask for clarification.
+4. Set 'risk_relevant' to true ONLY if the change could affect the risk assessment (e.g., changing description, quantities, product, batch). Minor typos, date changes, or site changes usually do not affect the risk assessment.
+5. 'reply' should be a short, natural-language confirmation naming exactly what changed and their new values (e.g., "Got it. I have updated the Batch/Lot Number to 'BMX240602'."). If risk_relevant is true, append " and I will recalculate the risk assessment." or similar.
+
+Allowed Fields and Enums:
+- title, site_plant, date_of_occurrence, related_product_material, batch_lot_number, detailed_description
+- source: "Production Floor", "Laboratory", "Audit Finding", "Regulatory Inspection", "Self-Reported", "Other"
+- initial_severity: "Critical", "Major", "Minor"
+- initial_impact: "No Impact", "Minor Impact", "Major Impact", "Critical Impact"
+
+Respond with a valid JSON object ONLY, in this exact format:
+{{
+  "partial_update": {{ "field_name": "new value", ... }},
+  "risk_relevant": true/false,
+  "reply": "your confirmation message"
+}}
+Do not include any prose, markdown, or explanation outside the JSON.
+"""
+
+EDIT_HUMAN = """\
+Current Form State:
+{current_state}
+
+User Message:
+{message}
+"""
+
+edit_prompt = ChatPromptTemplate.from_messages([
+    ("system", EDIT_SYSTEM),
+    ("human",  EDIT_HUMAN),
+])

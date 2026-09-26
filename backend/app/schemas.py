@@ -89,3 +89,22 @@ class DeviationResponse(DeviationCreate):
     updated_at: datetime
 
     model_config = {"from_attributes": True}   # ORM mode (Pydantic v2)
+
+
+# ── Edit Interaction (V2) ─────────────────────────────────────────────────────
+class EditInteractionRequest(BaseModel):
+    """
+    Request for the natural language edit interaction tool.
+    Contains the user's correction message and the current populated form state.
+    """
+    message: str = Field(..., description="The user's natural language correction message")
+    current_state: dict = Field(..., description="The current state of the extracted and assessed fields")
+
+
+class EditInteractionResponse(BaseModel):
+    """
+    Response after the AI parses the correction.
+    """
+    updated_state: dict = Field(description="The full state with the requested updates applied")
+    reply: str = Field(description="Natural-language confirmation of the change")
+    fields_changed: list[str] = Field(description="List of fields that were modified")

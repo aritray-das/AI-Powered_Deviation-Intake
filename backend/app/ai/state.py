@@ -26,3 +26,20 @@ class GraphState(TypedDict):
     extracted: Optional[Dict[str, Any]]
     assessment: Optional[Dict[str, Any]]
     error: Optional[str]
+
+
+class EditGraphState(TypedDict, total=False):
+    """
+    State for the edit interaction pipeline.
+    """
+    edit_message: str
+    current_state: Dict[str, Any]
+    
+    # Updated fields (merged after edit_node)
+    extracted: Optional[Dict[str, Any]]
+    assessment: Optional[Dict[str, Any]]
+    
+    edit_reply: Optional[str]
+    fields_changed: Optional[list[str]]
+    risk_relevant: Optional[bool]
+    error: Optional[str]
