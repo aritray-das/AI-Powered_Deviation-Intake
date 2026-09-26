@@ -15,6 +15,7 @@ from sqlalchemy import text
 from app.database import get_db
 # Import models so Alembic's env.py can discover them via Base.metadata
 import app.models  # noqa: F401
+from app.routers import deviations as deviations_router
 
 app = FastAPI(
     title="AIVOA.AI — Deviation Intake Module",
@@ -31,6 +32,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(deviations_router.router)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

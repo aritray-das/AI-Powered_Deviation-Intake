@@ -13,6 +13,24 @@ from pydantic import BaseModel, Field
 from app.models import SeverityEnum, InputSourceEnum, StatusEnum
 
 
+# ── POST /process request body ────────────────────────────────────────────────
+class ProcessTextRequest(BaseModel):
+    """Request body for POST /process — plain deviation text submitted by the user."""
+    text: str = Field(..., min_length=1, description="Raw deviation text to process with AI")
+
+
+# ── POST /extract/pdf response ────────────────────────────────────────────────
+class PDFExtractResponse(BaseModel):
+    """
+    Response from POST /extract/pdf.
+    Returns only the raw extracted text — no AI processing.
+    The frontend displays this to the user who then triggers AI separately.
+    """
+    extracted_text: str = Field(description="Full text extracted from the PDF by PyMuPDF")
+    page_count: int = Field(description="Number of pages in the uploaded PDF")
+    filename: str = Field(description="Original filename of the uploaded PDF")
+
+
 # ── Extracted fields (what the AI fills in from raw text) ─────────────────────
 class ExtractedFields(BaseModel):
     title: Optional[str] = None
