@@ -2,72 +2,99 @@
 models.py
 ---------
 SQLAlchemy ORM model for the Deviation table.
-Every column here maps directly to a database column in MySQL.
-Alembic reads this model to auto-generate migration scripts.
+Schema realigned to match the reference UI field list (v2).
+
+Removed fields (old): description, department, product_name, batch_number,
+  equipment_id, process_parameter, standard_value, actual_value,
+  deviation_duration, detected_by, immediate_action_taken, impact_assessment
+
+Added fields (new): site_plant, source, related_product_material,
+  batch_lot_number, detailed_description, initial_impact, suggested_next_action
+
+Renamed fields: severity → initial_severity
+
+Unchanged: id, status, input_source, original_filename, raw_input_text,
+  created_at, updated_at, title, date_of_occurrence, severity_reason, ai_confidence
 """
 
 import enum
-from datetime import datetime
-
-from sqlalchemy import (
-    Column, Integer, String, Text, Float,
-    Enum, DateTime, func
-)
+from sqlalchemy import Column, Integer, String, Text, Float, Enum, DateTime, func
 
 from app.database import Base
 
+# Helper so SQLAlchemy stores enum .values (e.g. "Production Floor") not .names ("Production_Floor").
+_values = lambda e: [m.value for m in e]
+
+
+# ── Enums ──────────────────────────────────────────────────────────────────────
 
 class SeverityEnum(enum.Enum):
+    """Unchanged from v1. Field renamed to initial_severity in the table."""
     Critical = "Critical"
     Major = "Major"
     Minor = "Minor"
 
 
+class SourceEnum(enum.Enum):
+    """Where/how the deviation was identified. Matches reference UI source field."""
+    Production_Floor       = "Production Floor"
+    Laboratory             = "Laboratory"
+    Audit_Finding          = "Audit Finding"
+    Regulatory_Inspection  = "Regulatory Inspection"
+    Self_Reported          = "Self-Reported"
+    Other                  = "Other"
+
+
+class InitialImpactEnum(enum.Enum):
+    """Quality impact level. Separate from severity (which captures risk level)."""
+    No_Impact       = "No Impact"
+    Minor_Impact    = "Minor Impact"
+    Major_Impact    = "Major Impact"
+    Critical_Impact = "Critical Impact"
+
+
 class InputSourceEnum(enum.Enum):
-    pdf = "pdf"
+    pdf         = "pdf"
     pasted_text = "pasted_text"
 
 
 class StatusEnum(enum.Enum):
-    Draft = "Draft"
+    Draft  = "Draft"
     Logged = "Logged"
 
 
+# ── ORM Model ──────────────────────────────────────────────────────────────────
+
 class Deviation(Base):
     """
-    Single table that stores everything about one deviation record:
-    extracted fields, AI assessment fields, system fields, and the
-    original raw text for the audit trail.
+    Single table storing one deviation record: form fields, AI assessment,
+    system fields, and the original raw text for the audit trail.
     """
     __tablename__ = "deviations"
 
-    # ── System-managed fields ──────────────────────────────────────────
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    status = Column(Enum(StatusEnum), nullable=False, default=StatusEnum.Draft)
-    input_source = Column(Enum(InputSourceEnum), nullable=True)
-    original_filename = Column(String(255), nullable=True)   # only set for PDF uploads
-    raw_input_text = Column(Text, nullable=True)             # full original text, audit trail
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(),
-                        onupdate=func.now(), nullable=False)
+    # ── System-managed fields (unchanged) ──────────────────────────────────────
+    id                = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    status            = Column(Enum(StatusEnum), nullable=False, default=StatusEnum.Draft)
+    input_source      = Column(Enum(InputSourceEnum), nullable=True)
+    original_filename = Column(String(255), nullable=True)
+    raw_input_text    = Column(Text, nullable=True)
+    created_at        = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at        = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # ── Extracted fields (AI-populated, user-editable) ─────────────────
-    title = Column(String(500), nullable=True)
-    description = Column(Text, nullable=True)
-    department = Column(String(255), nullable=True)
-    product_name = Column(String(255), nullable=True)
-    batch_number = Column(String(255), nullable=True)
-    equipment_id = Column(String(255), nullable=True)
-    process_parameter = Column(String(255), nullable=True)
-    standard_value = Column(String(255), nullable=True)
-    actual_value = Column(String(255), nullable=True)
-    deviation_duration = Column(String(255), nullable=True)
-    date_of_occurrence = Column(String(100), nullable=True)  # stored as string; user may type "2024-07-15" or "July 15"
-    detected_by = Column(String(255), nullable=True)
-    immediate_action_taken = Column(Text, nullable=True)
+    # ── Log Deviation form fields (AI-populated, user-editable) ────────────────
+    title                    = Column(String(500), nullable=True)
+    site_plant               = Column(String(255), nullable=True)
+    date_of_occurrence       = Column(String(100), nullable=True)   # Stored as string; AI may return "July 15, 2024"
+    source                   = Column(Enum(SourceEnum, values_callable=_values), nullable=True)
+    related_product_material = Column(String(500), nullable=True)
+    batch_lot_number         = Column(String(255), nullable=True)   # renamed from batch_number
+    detailed_description     = Column(Text, nullable=True)          # absorbs: description, process_parameter,
+                                                                    #   standard_value, actual_value, equipment_id,
+                                                                    #   deviation_duration, detected_by, immediate_action_taken
 
-    # ── AI assessment fields (AI-populated, user-editable) ─────────────
-    impact_assessment = Column(Text, nullable=True)
-    severity = Column(Enum(SeverityEnum), nullable=True)
-    severity_reason = Column(Text, nullable=True)
-    ai_confidence = Column(Float, nullable=True)             # 0.0 – 1.0, self-reported by LLM
+    # ── AI Risk Assessment fields (AI-populated, user-editable) ────────────────
+    initial_severity      = Column(Enum(SeverityEnum), nullable=True)    # renamed from severity; names==values so no values_callable needed
+    initial_impact        = Column(Enum(InitialImpactEnum, values_callable=_values), nullable=True)
+    severity_reason       = Column(Text, nullable=True)
+    suggested_next_action = Column(Text, nullable=True)
+    ai_confidence         = Column(Float, nullable=True)                 # 0.0–1.0, self-reported by LLM

@@ -10,9 +10,12 @@ Each function:
 
 Both nodes use `with_structured_output()` to enforce a Pydantic schema on the
 LLM response, which gives us reliable, type-safe JSON without manual parsing.
+
+Schema realignment (v2):
+  ExtractedDeviation: now targets the reference UI Log Deviation form fields.
+  AssessedDeviation:  now includes initial_impact and suggested_next_action.
 """
 
-import json
 from typing import Literal, Optional
 
 from langchain_groq import ChatGroq
@@ -24,11 +27,9 @@ from app.ai.prompts import extract_prompt, assess_prompt
 
 
 # ── Shared LLM instance ────────────────────────────────────────────────────────
-# temperature=0 → deterministic output, which is what we want for structured
-# data extraction in a regulated-industry QA context.
+# temperature=0 → deterministic output for structured data extraction.
 # NOTE: llama-3.3-70b-versatile is not available on this Groq account.
 # Using openai/gpt-oss-120b (largest available model) as a replacement.
-# To switch models, change the string below only.
 _llm = ChatGroq(
     model="openai/gpt-oss-120b",
     temperature=0,
@@ -37,38 +38,81 @@ _llm = ChatGroq(
 
 
 # ── Pydantic output schemas (used with with_structured_output) ─────────────────
+# Literal types here enforce that the LLM structurally cannot return a value
+# outside the allowed set — this is the first layer of the three-layer constraint.
 
 class ExtractedDeviation(BaseModel):
-    """Structured deviation fields extracted from raw text by Node 1."""
-    title: Optional[str] = Field(None, description="Concise 5-10 word summary of the deviation type")
-    description: Optional[str] = Field(None, description="Full description of what happened")
-    department: Optional[str] = Field(None, description="Department or unit where the deviation occurred")
-    product_name: Optional[str] = Field(None, description="Name of the product being manufactured")
-    batch_number: Optional[str] = Field(None, description="Batch or lot number")
-    equipment_id: Optional[str] = Field(None, description="Equipment ID or name involved")
-    process_parameter: Optional[str] = Field(None, description="The process parameter that deviated (e.g. temperature, pressure)")
-    standard_value: Optional[str] = Field(None, description="The approved/specification value with units")
-    actual_value: Optional[str] = Field(None, description="The actual observed value with units")
-    deviation_duration: Optional[str] = Field(None, description="How long the deviation lasted")
-    date_of_occurrence: Optional[str] = Field(None, description="Date the deviation occurred")
-    detected_by: Optional[str] = Field(None, description="Person or system that detected the deviation")
-    immediate_action_taken: Optional[str] = Field(None, description="Summary of all immediate corrective steps taken")
+    """Structured deviation fields extracted from raw text by Node 1 (v2)."""
+    title: Optional[str] = Field(
+        None,
+        description="Concise 5-10 word summary of the deviation type"
+    )
+    site_plant: Optional[str] = Field(
+        None,
+        description="Manufacturing site or plant unit where the deviation occurred (e.g. 'API Manufacturing Unit', 'Reactor Unit B')"
+    )
+    date_of_occurrence: Optional[str] = Field(
+        None,
+        description="Date the deviation occurred (NOT the report date). Return the date as it appears in the text."
+    )
+    source: Optional[Literal[
+        "Production Floor",
+        "Laboratory",
+        "Audit Finding",
+        "Regulatory Inspection",
+        "Self-Reported",
+        "Other"
+    ]] = Field(
+        None,
+        description="Where or how the deviation was identified. Choose the best match from the allowed values."
+    )
+    related_product_material: Optional[str] = Field(
+        None,
+        description="Name of the product or material involved (e.g. 'Metformin HCl API', 'Ibuprofen API')"
+    )
+    batch_lot_number: Optional[str] = Field(
+        None,
+        description="Batch or lot number of the affected material"
+    )
+    detailed_description: Optional[str] = Field(
+        None,
+        description=(
+            "Comprehensive narrative description of the deviation. Include all of: "
+            "what parameter deviated, the specification/standard value, the actual observed value, "
+            "the equipment involved, how long the deviation lasted, who detected it and how, "
+            "and what immediate corrective actions were taken. "
+            "Write as a single cohesive paragraph. Maximum 2000 characters."
+        )
+    )
 
 
 class AssessedDeviation(BaseModel):
-    """Impact assessment and severity produced by Node 2."""
-    impact_assessment: str = Field(
-        description="Short paragraph (3-6 sentences) on potential quality and regulatory impact"
-    )
-    severity: Literal["Critical", "Major", "Minor"] = Field(
+    """Impact assessment and severity produced by Node 2 (v2)."""
+    initial_severity: Literal["Critical", "Major", "Minor"] = Field(
         description="GMP-aligned severity classification"
     )
+    initial_impact: Literal[
+        "No Impact",
+        "Minor Impact",
+        "Major Impact",
+        "Critical Impact"
+    ] = Field(
+        description="Quality impact level of the deviation on the product or process"
+    )
     severity_reason: str = Field(
-        description="2-4 sentence justification referencing specific extracted values"
+        description="2-4 sentence justification referencing specific extracted values (parameter, actual vs spec, duration)"
+    )
+    suggested_next_action: str = Field(
+        description=(
+            "Short, specific, actionable QA recommendation for immediate next step. "
+            "Examples: 'Initiate CAPA investigation', 'Hold batch pending QA review', "
+            "'Notify QA Head immediately', 'Perform OOS investigation'. "
+            "One sentence, action-verb first."
+        )
     )
     ai_confidence: float = Field(
         ge=0.0, le=1.0,
-        description="Self-reported confidence in the severity classification (0.0–1.0)"
+        description="Self-reported confidence in the severity and impact classification (0.0-1.0). Lower when key fields are missing or ambiguous."
     )
 
 
@@ -87,8 +131,8 @@ def extract_node(state: GraphState) -> dict:
         return {"error": "raw_text is empty — nothing to extract.", "extracted": None}
 
     try:
-        structured_llm = _llm.with_structured_output(ExtractedDeviation)
-        chain = extract_prompt | structured_llm
+        structured_llm = _llm.with_structured_output(ExtractedDeviation, method="json_mode")
+        chain  = extract_prompt | structured_llm
         result: ExtractedDeviation = chain.invoke({"raw_text": raw_text})
         return {
             "extracted": result.model_dump(),
@@ -112,20 +156,18 @@ def assess_node(state: GraphState) -> dict:
     Skips processing and propagates the error if extract_node failed.
     """
     if state.get("error"):
-        # Don't attempt assessment if extraction already failed
         return {"assessment": None}
 
     extracted = state.get("extracted") or {}
 
-    # Format extracted fields as readable key: value pairs for the prompt
     extracted_fields_text = "\n".join(
         f"  {key.replace('_', ' ').title()}: {value if value is not None else 'Not found'}"
         for key, value in extracted.items()
     )
 
     try:
-        structured_llm = _llm.with_structured_output(AssessedDeviation)
-        chain = assess_prompt | structured_llm
+        structured_llm = _llm.with_structured_output(AssessedDeviation, method="json_mode")
+        chain  = assess_prompt | structured_llm
         result: AssessedDeviation = chain.invoke({"extracted_fields": extracted_fields_text})
         return {
             "assessment": result.model_dump(),

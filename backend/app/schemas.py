@@ -1,16 +1,20 @@
 """
 schemas.py
 ----------
-Pydantic schemas used for request validation and response serialisation.
-These are separate from the SQLAlchemy models — models talk to the DB,
-schemas talk to the API layer.
+Pydantic schemas for request validation and response serialisation (v2).
+Aligned to the reference UI field list.
+
+Enforcement pattern (same as SeverityEnum in v1):
+  1. Literal type in nodes.py  -> LLM structurally cannot return an invalid value
+  2. Pydantic enum here         -> API layer rejects invalid values on POST /deviations
+  3. Enum column in models.py   -> DB rejects invalid values at write time
 """
 
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from app.models import SeverityEnum, InputSourceEnum, StatusEnum
+from app.models import SeverityEnum, SourceEnum, InitialImpactEnum, InputSourceEnum, StatusEnum
 
 
 # ── POST /process request body ────────────────────────────────────────────────
@@ -27,38 +31,40 @@ class PDFExtractResponse(BaseModel):
     The frontend displays this to the user who then triggers AI separately.
     """
     extracted_text: str = Field(description="Full text extracted from the PDF by PyMuPDF")
-    page_count: int = Field(description="Number of pages in the uploaded PDF")
-    filename: str = Field(description="Original filename of the uploaded PDF")
+    page_count: int     = Field(description="Number of pages in the uploaded PDF")
+    filename: str       = Field(description="Original filename of the uploaded PDF")
 
 
-# ── Extracted fields (what the AI fills in from raw text) ─────────────────────
+# ── Extracted fields (what the AI fills in from the deviation text) ───────────
 class ExtractedFields(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    department: Optional[str] = None
-    product_name: Optional[str] = None
-    batch_number: Optional[str] = None
-    equipment_id: Optional[str] = None
-    process_parameter: Optional[str] = None
-    standard_value: Optional[str] = None
-    actual_value: Optional[str] = None
-    deviation_duration: Optional[str] = None
-    date_of_occurrence: Optional[str] = None
-    detected_by: Optional[str] = None
-    immediate_action_taken: Optional[str] = None
+    """
+    Fields extracted by the AI from raw deviation text.
+    Matches the Log Deviation form in the reference UI.
+    detailed_description absorbs the formerly separate fields:
+      process_parameter, standard_value, actual_value, equipment_id,
+      deviation_duration, detected_by, immediate_action_taken, description.
+    """
+    title:                    Optional[str] = None
+    site_plant:               Optional[str] = None
+    date_of_occurrence:       Optional[str] = None                              # kept as str; see judgment call note
+    source:                   Optional[SourceEnum] = None
+    related_product_material: Optional[str] = None
+    batch_lot_number:         Optional[str] = None
+    detailed_description:     Optional[str] = Field(None, max_length=2000)     # UI limit: 2000 chars
 
 
-# ── Assessment fields (what the AI assesses after extraction) ─────────────────
+# ── Assessment fields (AI risk assessment section) ────────────────────────────
 class AssessmentFields(BaseModel):
-    impact_assessment: Optional[str] = None
-    severity: Optional[SeverityEnum] = None
-    severity_reason: Optional[str] = None
-    ai_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    initial_severity:      Optional[SeverityEnum]      = None
+    initial_impact:        Optional[InitialImpactEnum] = None
+    severity_reason:       Optional[str]               = None
+    suggested_next_action: Optional[str]               = None
+    ai_confidence:         Optional[float]             = Field(None, ge=0.0, le=1.0)
 
 
 # ── Combined AI result returned from POST /process ────────────────────────────
 class AIProcessResult(BaseModel):
-    extracted: ExtractedFields
+    extracted:  ExtractedFields
     assessment: AssessmentFields
 
 
@@ -67,17 +73,19 @@ class DeviationCreate(ExtractedFields, AssessmentFields):
     """
     All user-editable fields merged into one flat schema.
     The user may have changed any AI-populated value before saving.
+    System fields (raw_input_text, input_source, original_filename, status)
+    are included here because the frontend sends them on save.
     """
-    raw_input_text: Optional[str] = None
-    input_source: Optional[InputSourceEnum] = None
-    original_filename: Optional[str] = None
-    status: StatusEnum = StatusEnum.Logged
+    raw_input_text:    Optional[str]             = None
+    input_source:      Optional[InputSourceEnum] = None
+    original_filename: Optional[str]             = None
+    status:            StatusEnum                = StatusEnum.Logged
 
 
 # ── Response schema for a saved deviation record ──────────────────────────────
 class DeviationResponse(DeviationCreate):
-    id: int
+    id:         int
     created_at: datetime
     updated_at: datetime
 
-    model_config = {"from_attributes": True}  # enables ORM mode (replaces orm_mode in Pydantic v2)
+    model_config = {"from_attributes": True}   # ORM mode (Pydantic v2)
