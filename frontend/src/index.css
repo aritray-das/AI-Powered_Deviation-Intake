@@ -8,7 +8,7 @@
   --border-color: #e2e8f0;
   --error-color: #ef4444;
   --highlight-color: #fef08a;
-  
+
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -20,7 +20,8 @@
 
 body {
   font-family: var(--font-family);
-  background-color: #f1f5f9; /* Softer gray background for the app */
+  background-color: #f1f5f9;
+  /* Softer gray background for the app */
   color: var(--text-main);
   height: 100vh;
   overflow: hidden;
@@ -78,7 +79,8 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-left: 1.75rem; /* Align with text */
+  margin-left: 1.75rem;
+  /* Align with text */
 }
 
 .nav-center-pill {
@@ -91,7 +93,7 @@ body {
   background-color: #ffffff;
   padding: 0.25rem;
   border-radius: 999px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border-color);
   z-index: 10;
 }
@@ -101,7 +103,8 @@ body {
   top: 0.25rem;
   bottom: 0.25rem;
   left: 0.25rem;
-  width: 110px; /* Fixed width for each tab */
+  width: 110px;
+  /* Fixed width for each tab */
   background-color: var(--primary-color);
   border-radius: 999px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -114,7 +117,8 @@ body {
   font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
-  width: 110px; /* Match active pill width */
+  width: 110px;
+  /* Match active pill width */
   text-align: center;
   padding: 0.6rem 0;
   border-radius: 999px;
@@ -152,6 +156,7 @@ body {
   cursor: pointer;
   color: var(--text-muted);
 }
+
 .notification-dot {
   position: absolute;
   top: 0;
@@ -208,7 +213,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   overflow: hidden;
 }
 
@@ -239,10 +244,12 @@ body {
   background-color: #f1f5f9;
   color: var(--text-muted);
 }
+
 .status-badge.ready-for-review {
   background-color: #fef08a;
   color: #854d0e;
 }
+
 .status-badge.logged {
   background-color: #dcfce3;
   color: #166534;
@@ -351,16 +358,18 @@ body {
   background-color: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   text-align: center;
   padding: 3rem;
   color: var(--text-main);
 }
+
 .placeholder-page h2 {
   font-size: 1.75rem;
   margin-bottom: 1rem;
   color: var(--primary-color);
 }
+
 .placeholder-page p {
   color: var(--text-muted);
   font-size: 1.1rem;
@@ -374,6 +383,7 @@ body {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
+
 .section-divider span {
   font-size: 0.75rem;
   font-weight: 700;
@@ -381,6 +391,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 .section-divider hr {
   flex: 1;
   border: none;
@@ -401,8 +412,8 @@ body {
   color: var(--text-main);
 }
 
-.form-group input, 
-.form-group select, 
+.form-group input,
+.form-group select,
 .form-group textarea {
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border-color);
@@ -437,50 +448,118 @@ body {
 }
 
 @keyframes highlight-pulse {
-  0% { background-color: var(--highlight-color); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: var(--highlight-color);
+  }
+
+  100% {
+    background-color: transparent;
+  }
 }
 
 /* AI Risk Assessment Box */
 .risk-assessment-box {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
   border-radius: 8px;
   padding: 1.5rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
+
 .risk-assessment-box h3 {
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #0369a1;
 }
-.read-only-field {
-  margin-bottom: 1rem;
+
+.risk-score-row {
+  display: flex;
+  gap: 1rem;
 }
-.read-only-field label {
-  display: block;
-  font-size: 0.75rem;
+
+.risk-score-card {
+  flex: 1;
+  background-color: white;
+  border: 1px solid #e0f2fe;
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.risk-reason-card,
+.risk-action-card {
+  background-color: white;
+  border: 1px solid #e0f2fe;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.risk-label {
+  font-size: 0.7rem;
   text-transform: uppercase;
   color: var(--text-muted);
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-weight: 650;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
 }
-.read-only-field p {
-  font-size: 0.95rem;
+
+.risk-reason-card p,
+.risk-action-card p {
+  font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text-main);
+  margin: 0;
 }
+
+.risk-badge {
+  display: inline-flex;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.risk-badge.critical {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.risk-badge.major {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.risk-badge.minor {
+  background-color: #fef08a;
+  color: #854d0e;
+}
+
+.risk-badge.default {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
 .confidence-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  background-color: #e0e7ff;
-  color: #3730a3;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  background-color: #bae6fd;
+  color: #0369a1;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .panel-footer {
@@ -505,9 +584,11 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
+
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover);
 }
+
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -522,7 +603,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   overflow: hidden;
 }
 
@@ -551,7 +632,7 @@ body {
   border-radius: 8px;
   line-height: 1.5;
   font-size: 0.85rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .message.assistant {
@@ -594,6 +675,7 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
+
 .process-btn:hover {
   background-color: #eff6ff;
 }
@@ -613,7 +695,9 @@ body {
   align-items: center;
   gap: 0.5rem;
 }
-.dropzone:hover, .dropzone.active {
+
+.dropzone:hover,
+.dropzone.active {
   border-color: var(--primary-color);
   background-color: #eff6ff;
 }
@@ -640,14 +724,17 @@ body {
   justify-content: center;
   padding: 0.5rem;
   border-radius: 6px;
-  height: 38px; /* Match min-height of textarea */
+  height: 38px;
+  /* Match min-height of textarea */
   transition: all 0.2s;
   margin-bottom: 8px;
 }
+
 .paperclip-btn-beside:hover:not(:disabled) {
   background-color: #f1f5f9;
   color: var(--primary-color);
 }
+
 .paperclip-btn-beside:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -678,6 +765,7 @@ body {
   border-radius: 50%;
   padding: 0.15rem;
 }
+
 .attachment-remove:hover {
   color: #ef4444;
   background-color: #fee2e2;
@@ -694,6 +782,7 @@ body {
   min-height: 38px;
   max-height: 120px;
 }
+
 .chat-input-wrapper textarea:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -705,13 +794,15 @@ body {
   border: none;
   border-radius: 6px;
   width: 38px;
-  height: 38px; /* Match min-height of textarea */
+  height: 38px;
+  /* Match min-height of textarea */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 9px;
 }
+
 .send-btn:disabled {
   opacity: 0.6;
 }
@@ -730,14 +821,20 @@ body {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinner {
@@ -771,8 +868,14 @@ body {
 .proc-step.done {
   color: var(--text-main);
 }
+
 .loading-indicator.dark {
-  border: 2px solid rgba(0,0,0,0.1);
+  border: 2px solid rgba(0, 0, 0, 0.1);
   border-top-color: var(--primary-color);
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

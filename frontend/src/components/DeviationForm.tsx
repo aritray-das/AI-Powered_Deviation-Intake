@@ -49,7 +49,7 @@ export const DeviationForm: React.FC = () => {
 
   const ExtractionSummary = () => {
     if (ui.statusBadge !== 'Ready for Review') return null;
-    
+
     const inputKeys = Object.keys(form).filter(
       k => k !== 'ai_confidence' && k !== 'severity_reason' && k !== 'suggested_next_action'
     ) as Array<keyof typeof form>;
@@ -57,7 +57,7 @@ export const DeviationForm: React.FC = () => {
     const populatedCount = inputKeys.filter(k => form[k] && !userReviewedFields.includes(k)).length;
     const emptyCount = inputKeys.filter(k => !form[k]).length;
     const reviewedCount = userReviewedFields.filter(k => inputKeys.includes(k as any)).length;
-    
+
     return (
       <div className="extraction-summary">
         <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
@@ -82,7 +82,7 @@ export const DeviationForm: React.FC = () => {
     );
   };
 
-  const getHighlightClass = (field: string) => 
+  const getHighlightClass = (field: string) =>
     ui.fieldsRecentlyChanged.includes(field) ? 'field-highlight' : '';
 
   const handleSave = () => {
@@ -102,7 +102,7 @@ export const DeviationForm: React.FC = () => {
           {ui.statusBadge}
         </span>
       </div>
-      
+
       <div className="form-content">
         <ExtractionSummary />
         <div className="section-divider">
@@ -112,10 +112,10 @@ export const DeviationForm: React.FC = () => {
 
         <div className="form-group">
           <label>Title <FieldStatus field="title" /></label>
-          <input 
-            type="text" 
-            name="title" 
-            value={form.title} 
+          <input
+            type="text"
+            name="title"
+            value={form.title}
             onChange={handleChange}
             className={getHighlightClass('title')}
             placeholder={ui.statusBadge === 'Draft' ? "Awaiting AI extraction..." : "Short description of the deviation..."}
@@ -125,20 +125,20 @@ export const DeviationForm: React.FC = () => {
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-group" style={{ flex: 1 }}>
             <label>Site/Plant <FieldStatus field="site_plant" /></label>
-            <input 
-              type="text" 
-              name="site_plant" 
-              value={form.site_plant} 
+            <input
+              type="text"
+              name="site_plant"
+              value={form.site_plant}
               onChange={handleChange}
               className={getHighlightClass('site_plant')}
             />
           </div>
           <div className="form-group" style={{ flex: 1 }}>
             <label>Date of Occurrence <FieldStatus field="date_of_occurrence" /></label>
-            <input 
-              type="text" 
-              name="date_of_occurrence" 
-              value={form.date_of_occurrence} 
+            <input
+              type="text"
+              name="date_of_occurrence"
+              value={form.date_of_occurrence}
               onChange={handleChange}
               className={getHighlightClass('date_of_occurrence')}
               placeholder="e.g. July 15, 2024"
@@ -161,10 +161,10 @@ export const DeviationForm: React.FC = () => {
           </div>
           <div className="form-group" style={{ flex: 1 }}>
             <label>Batch/Lot Number <FieldStatus field="batch_lot_number" /></label>
-            <input 
-              type="text" 
-              name="batch_lot_number" 
-              value={form.batch_lot_number} 
+            <input
+              type="text"
+              name="batch_lot_number"
+              value={form.batch_lot_number}
               onChange={handleChange}
               className={getHighlightClass('batch_lot_number')}
             />
@@ -173,10 +173,10 @@ export const DeviationForm: React.FC = () => {
 
         <div className="form-group">
           <label>Related Product/Material <FieldStatus field="related_product_material" /></label>
-          <input 
-            type="text" 
-            name="related_product_material" 
-            value={form.related_product_material} 
+          <input
+            type="text"
+            name="related_product_material"
+            value={form.related_product_material}
             onChange={handleChange}
             className={getHighlightClass('related_product_material')}
           />
@@ -189,9 +189,9 @@ export const DeviationForm: React.FC = () => {
 
         <div className="form-group">
           <label>Detailed Description <FieldStatus field="detailed_description" /></label>
-          <textarea 
-            name="detailed_description" 
-            value={form.detailed_description} 
+          <textarea
+            name="detailed_description"
+            value={form.detailed_description}
             onChange={handleChange}
             className={getHighlightClass('detailed_description')}
             maxLength={2000}
@@ -226,10 +226,10 @@ export const DeviationForm: React.FC = () => {
 
         <RiskAssessment />
       </div>
-      
+
       <div className="panel-footer">
-        <button 
-          className="btn-primary" 
+        <button
+          className="btn-primary"
           onClick={handleSave}
           disabled={ui.isSaving || isFormEmpty}
         >

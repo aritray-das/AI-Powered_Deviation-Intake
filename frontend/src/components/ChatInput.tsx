@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../store/store';
 import { processText, sendEditMessage, extractPdf } from '../store/deviationSlice';
-import { Send, Paperclip, X } from 'lucide-react';
+import { Send, Paperclip, X, FileText } from 'lucide-react';
 
 export const ChatInput: React.FC = () => {
   const [text, setText] = useState('');
@@ -50,7 +50,8 @@ export const ChatInput: React.FC = () => {
     <div className="chat-input-container">
       {attachment && (
         <div className="attachment-chip">
-          <span className="attachment-name">{attachment.name}</span>
+          <FileText size={14} color="#ef4444" />
+          <span className="attachment-name" style={{ fontWeight: 600 }}>{attachment.name}</span>
           <button className="attachment-remove" onClick={() => setAttachment(null)}>
             <X size={14} />
           </button>
@@ -61,7 +62,7 @@ export const ChatInput: React.FC = () => {
           className="paperclip-btn-beside"
           onClick={() => fileInputRef.current?.click()}
           disabled={ui.isProcessing || ui.isEditing || ui.isExtracting}
-          title="Attach PDF or DOCX file"
+          title="Attach PDF file"
         >
           <Paperclip size={20} />
         </button>
@@ -69,7 +70,7 @@ export const ChatInput: React.FC = () => {
           type="file" 
           ref={fileInputRef} 
           style={{ display: 'none' }} 
-          accept=".pdf,.doc,.docx"
+          accept=".pdf"
           onChange={handleFileChange} 
         />
         <textarea
