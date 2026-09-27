@@ -47,6 +47,41 @@ export const DeviationForm: React.FC = () => {
     return null;
   };
 
+  const ExtractionSummary = () => {
+    if (ui.statusBadge !== 'Ready for Review') return null;
+    
+    const inputKeys = Object.keys(form).filter(
+      k => k !== 'ai_confidence' && k !== 'severity_reason' && k !== 'suggested_next_action'
+    ) as Array<keyof typeof form>;
+
+    const populatedCount = inputKeys.filter(k => form[k] && !userReviewedFields.includes(k)).length;
+    const emptyCount = inputKeys.filter(k => !form[k]).length;
+    const reviewedCount = userReviewedFields.filter(k => inputKeys.includes(k as any)).length;
+    
+    return (
+      <div className="extraction-summary">
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <div className="summary-stat">
+            <span className="stat-num ai">{populatedCount}</span>
+            <span className="stat-label">AI Populated</span>
+          </div>
+          <div className="summary-stat">
+            <span className="stat-num warning">{emptyCount}</span>
+            <span className="stat-label">Empty Fields</span>
+          </div>
+          <div className="summary-stat">
+            <span className="stat-num success">{reviewedCount}</span>
+            <span className="stat-label">Reviewed</span>
+          </div>
+        </div>
+        <div className="summary-msg">
+          <Sparkles size={14} color="#7e22ce" />
+          Review highlighted fields before saving
+        </div>
+      </div>
+    );
+  };
+
   const getHighlightClass = (field: string) => 
     ui.fieldsRecentlyChanged.includes(field) ? 'field-highlight' : '';
 
@@ -69,6 +104,7 @@ export const DeviationForm: React.FC = () => {
       </div>
       
       <div className="form-content">
+        <ExtractionSummary />
         <div className="section-divider">
           <span>1. Deviation Information</span>
           <hr />
