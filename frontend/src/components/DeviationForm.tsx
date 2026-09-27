@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../store/store';
-import { updateFormField, clearFieldsRecentlyChanged, saveDeviation } from '../store/deviationSlice';
+import { updateFormField, clearFieldsRecentlyChanged, saveDeviation, resetForm } from '../store/deviationSlice';
 import { RiskAssessment } from './RiskAssessment';
-import { Save, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Save, Sparkles, CheckCircle2, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
 export const DeviationForm: React.FC = () => {
@@ -87,6 +87,13 @@ export const DeviationForm: React.FC = () => {
 
   const handleSave = () => {
     dispatch(saveDeviation());
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset the form? All data will be lost.")) {
+      dispatch(resetForm());
+      setUserReviewedFields([]);
+    }
   };
 
   const isFormEmpty = !form.title && !form.detailed_description;
@@ -229,11 +236,18 @@ export const DeviationForm: React.FC = () => {
 
       <div className="panel-footer">
         <button
+          className="btn-secondary"
+          onClick={handleReset}
+          disabled={ui.isSaving || isFormEmpty}
+        >
+          <RotateCcw size={14} /> Reset form
+        </button>
+        <button
           className="btn-primary"
           onClick={handleSave}
           disabled={ui.isSaving || isFormEmpty}
         >
-          {ui.isSaving ? <span className="loading-indicator"></span> : <Save size={18} />}
+          {ui.isSaving ? <span className="loading-indicator"></span> : <Save size={16} />}
           {ui.isSaving ? 'Saving...' : 'Save Deviation'}
         </button>
       </div>

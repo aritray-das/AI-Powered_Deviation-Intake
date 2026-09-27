@@ -9,13 +9,13 @@ export const TopNavBar = ({ activeTab = 'Deviations' }: { activeTab?: string }) 
     <div className="top-nav">
       <div className="nav-left">
         <div className="logo-container">
-          <div className="logo-row">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L22 20H2L12 2Z" fill="#2563eb"/>
-            </svg>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+            <path d="M12 2L22 20H2L12 2Z" fill="#2563eb"/>
+          </svg>
+          <div className="logo-text-wrapper">
             <span className="logo-text">AIVOA</span>
+            <span className="tagline">AI for a Safer Tomorrow</span>
           </div>
-          <span className="tagline">AI for a Safer Tomorrow</span>
         </div>
       </div>
       

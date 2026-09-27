@@ -159,7 +159,8 @@ const deviationSlice = createSlice({
     },
     clearFieldsRecentlyChanged: (state) => {
       state.ui.fieldsRecentlyChanged = [];
-    }
+    },
+    resetForm: () => initialState,
   },
   extraReducers: (builder) => {
     // Process Text
@@ -271,5 +272,5 @@ const deviationSlice = createSlice({
   }
 });
 
-export const { updateFormField, clearError, clearFieldsRecentlyChanged } = deviationSlice.actions;
+export const { updateFormField, clearError, clearFieldsRecentlyChanged, resetForm } = deviationSlice.actions;
 export default deviationSlice.reducer;
