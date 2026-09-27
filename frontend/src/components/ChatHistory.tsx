@@ -1,9 +1,71 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../store/store';
 import { processText } from '../store/deviationSlice';
-import { Sparkles, Bot, User } from 'lucide-react';
+import { Sparkles, Bot, User, CheckCircle, CircleDashed, Loader2 } from 'lucide-react';
+
+const ProcessingStatus = ({ isProcessing, isExtracting, isEditing }: { isProcessing: boolean, isExtracting: boolean, isEditing: boolean }) => {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!isProcessing) {
+      setStep(0);
+      return;
+    }
+    const t1 = setTimeout(() => setStep(1), 1200);
+    const t2 = setTimeout(() => setStep(2), 2400);
+    const t3 = setTimeout(() => setStep(3), 3600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [isProcessing]);
+
+  if (!isProcessing && !isExtracting && !isEditing) return null;
+
+  return (
+    <div className="message assistant">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, fontSize: '0.85rem', opacity: 0.8, marginBottom: '0.75rem' }}>
+        <Bot size={14} /> AI Assistant
+      </div>
+      
+      {isExtracting && (
+        <div className="proc-step active">
+          <Loader2 size={16} className="spinner" color="#2563eb" />
+          <span>Analyzing document...</span>
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="proc-step active">
+          <Loader2 size={16} className="spinner" color="#2563eb" />
+          <span>Applying edit...</span>
+        </div>
+      )}
+
+      {isProcessing && (
+        <div className="processing-steps-col">
+          {['Reading input', 'Extracting deviation fields', 'Assessing risk', 'Ready for review'].map((s, i) => {
+            const isActive = i === step;
+            const isDone = i < step;
+            const isPending = i > step;
+            
+            return (
+              <div key={s} className={`proc-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isPending ? 'pending' : ''}`}>
+                {isDone ? (
+                  <CheckCircle size={16} color="#16a34a" />
+                ) : isActive ? (
+                  <Loader2 size={16} className="spinner" color="#2563eb" />
+                ) : (
+                  <CircleDashed size={16} color="#cbd5e1" />
+                )}
+                <span>{s}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const ChatHistory: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -19,7 +81,7 @@ export const ChatHistory: React.FC = () => {
   };
 
   return (
-    <div className="chat-history">
+    <>
       {chatHistory.map((msg) => (
         <div key={msg.id} className={`message ${msg.role}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.85rem', opacity: 0.8 }}>
@@ -45,18 +107,12 @@ export const ChatHistory: React.FC = () => {
         </div>
       ))}
       
-      {(ui.isProcessing || ui.isEditing || ui.isExtracting) && (
-        <div className="message assistant">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500, fontSize: '0.85rem', opacity: 0.8 }}>
-             <Bot size={14} /> AI Assistant
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <span className="loading-indicator dark"></span>
-            {ui.isExtracting ? 'Analyzing document...' : ui.isProcessing ? 'Processing deviation...' : 'Applying edit...'}
-          </div>
-        </div>
-      )}
+      <ProcessingStatus 
+        isProcessing={ui.isProcessing} 
+        isExtracting={ui.isExtracting} 
+        isEditing={ui.isEditing} 
+      />
       <div ref={endOfMessagesRef} />
-    </div>
+    </>
   );
 };

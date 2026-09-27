@@ -40,7 +40,7 @@ export const FileDropzone: React.FC = () => {
       onDragOver={handleDragOver}
       onClick={() => document.getElementById('pdf-upload')?.click()}
     >
-      <UploadCloud size={48} color="#94a3b8" />
+      <UploadCloud size={32} color="#94a3b8" />
       <div>
         <strong>Drag and drop a PDF here</strong>
         <p style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>or click to browse</p>

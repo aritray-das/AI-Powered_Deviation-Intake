@@ -36,13 +36,21 @@ export const DeviationForm: React.FC = () => {
   return (
     <div className="left-panel">
       <div className="panel-header">
-        <h1>Log Deviation</h1>
+        <div>
+          <h1>Log Deviation</h1>
+          <div className="panel-subtitle">Record any unexpected event, out-of-specification result or non-conformance.</div>
+        </div>
         <span className={`status-badge ${ui.statusBadge.toLowerCase().replace(/ /g, '-')}`}>
           {ui.statusBadge}
         </span>
       </div>
       
       <div className="form-content">
+        <div className="section-divider">
+          <span>1. Deviation Information</span>
+          <hr />
+        </div>
+
         <div className="form-group">
           <label>Title</label>
           <input 
@@ -113,6 +121,11 @@ export const DeviationForm: React.FC = () => {
             onChange={handleChange}
             className={getHighlightClass('related_product_material')}
           />
+        </div>
+
+        <div className="section-divider">
+          <span>2. Deviation Details</span>
+          <hr />
         </div>
 
         <div className="form-group">

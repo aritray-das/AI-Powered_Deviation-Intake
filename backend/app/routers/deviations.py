@@ -74,33 +74,54 @@ def _pipeline_result_to_schema(result: dict) -> AIProcessResult:
 #   3. Frontend sends text to POST /process  →  AI result
 # This keeps human oversight between PDF extraction and AI processing.
 
-def _extract_text_from_pdf_upload(file_content: bytes, filename: str) -> tuple:
+def _extract_text_from_document_upload(file_content: bytes, filename: str) -> tuple:
     """
-    Shared PDF text-extraction logic used by both /extract/pdf and /process/pdf.
+    Shared document text-extraction logic used by both /extract/pdf and /process/pdf.
+    Now supports both PDF and DOCX formats.
     Returns (raw_text: str, page_count: int).
-    Raises HTTPException on invalid/empty PDF.
+    Raises HTTPException on invalid/empty document.
     """
-    try:
-        doc = fitz.open(stream=file_content, filetype="pdf")
-    except Exception:
+    lower_filename = filename.lower()
+    raw_text = ""
+    page_count = 1
+
+    if lower_filename.endswith(".pdf"):
+        try:
+            doc = fitz.open(stream=file_content, filetype="pdf")
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not open the uploaded file as a PDF. "
+                       "Ensure the file is a valid, non-corrupted PDF.",
+            )
+        page_count = len(doc)
+        for page in doc:
+            raw_text += page.get_text()
+        doc.close()
+    elif lower_filename.endswith(".docx") or lower_filename.endswith(".doc"):
+        try:
+            import docx
+            from io import BytesIO
+            doc = docx.Document(BytesIO(file_content))
+            raw_text = "\n".join([p.text for p in doc.paragraphs])
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from the Word document. "
+                       "Note that older .doc formats might not be supported.",
+            )
+    else:
         raise HTTPException(
             status_code=400,
-            detail="Could not open the uploaded file as a PDF. "
-                   "Ensure the file is a valid, non-corrupted PDF.",
+            detail="Unsupported file format. Only PDF and DOC/DOCX are allowed.",
         )
-
-    raw_text   = ""
-    page_count = len(doc)
-    for page in doc:
-        raw_text += page.get_text()
-    doc.close()
 
     if not raw_text.strip():
         raise HTTPException(
             status_code=400,
-            detail="This PDF does not contain extractable text. "
+            detail="This document does not contain extractable text. "
                    "Scanned/image-only PDFs are not supported — OCR is not implemented. "
-                   "Please use a PDF with selectable text, or paste the text directly.",
+                   "Please use a document with selectable text, or paste the text directly.",
         )
 
     return raw_text, page_count
@@ -124,17 +145,17 @@ async def extract_pdf_text(file: UploadFile = File(...)):
     This preserves human oversight between PDF extraction and AI processing.
     OCR is NOT supported.
     """
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    if not file.filename or not (file.filename.lower().endswith(".pdf") or file.filename.lower().endswith(".docx") or file.filename.lower().endswith(".doc")):
         raise HTTPException(
             status_code=400,
-            detail="Uploaded file must be a PDF (filename must end with .pdf).",
+            detail="Uploaded file must be a PDF or Word document (.doc/.docx).",
         )
 
     content = await file.read()
     if not content:
-        raise HTTPException(status_code=400, detail="Uploaded PDF file is empty.")
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
-    raw_text, page_count = _extract_text_from_pdf_upload(content, file.filename)
+    raw_text, page_count = _extract_text_from_document_upload(content, file.filename)
 
     return PDFExtractResponse(
         extracted_text=raw_text,
@@ -188,17 +209,17 @@ async def process_pdf(file: UploadFile = File(...)):
     This endpoint is retained for convenience and backward compatibility.
     OCR is NOT supported.
     """
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
+    if not file.filename or not (file.filename.lower().endswith(".pdf") or file.filename.lower().endswith(".docx") or file.filename.lower().endswith(".doc")):
         raise HTTPException(
             status_code=400,
-            detail="Uploaded file must be a PDF (filename must end with .pdf).",
+            detail="Uploaded file must be a PDF or Word document (.doc/.docx).",
         )
 
     content = await file.read()
     if not content:
-        raise HTTPException(status_code=400, detail="Uploaded PDF file is empty.")
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
-    raw_text, _ = _extract_text_from_pdf_upload(content, file.filename)
+    raw_text, _ = _extract_text_from_document_upload(content, file.filename)
     result = run_pipeline(raw_text)
     return _pipeline_result_to_schema(result)
 

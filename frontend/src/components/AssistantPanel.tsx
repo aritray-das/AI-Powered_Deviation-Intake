@@ -4,6 +4,7 @@ import type { RootState } from '../store/store';
 import { ChatHistory } from './ChatHistory';
 import { FileDropzone } from './FileDropzone';
 import { ChatInput } from './ChatInput';
+import { Sparkles } from 'lucide-react';
 
 export const AssistantPanel: React.FC = () => {
   const { chatHistory, ui } = useSelector((state: RootState) => state.deviation);
@@ -14,7 +15,9 @@ export const AssistantPanel: React.FC = () => {
   return (
     <div className="right-panel">
       <div className="panel-header" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'white' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>AI Assistant</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Sparkles size={20} color="#2563eb" /> AI Deviation Assistant <span className="beta-badge">BETA</span>
+        </h2>
       </div>
       
       {ui.error && (
@@ -23,7 +26,7 @@ export const AssistantPanel: React.FC = () => {
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: showDropzone ? '1.5rem' : 0 }}>
+      <div className="chat-scroll-area">
         {showDropzone && <FileDropzone />}
         <ChatHistory />
       </div>
