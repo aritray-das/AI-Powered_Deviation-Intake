@@ -4,15 +4,23 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { RootState, AppDispatch } from '../store/store';
 import { updateFormField, clearFieldsRecentlyChanged, saveDeviation } from '../store/deviationSlice';
 import { RiskAssessment } from './RiskAssessment';
-import { Save } from 'lucide-react';
+import { Save, Sparkles, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
 
 export const DeviationForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { form, ui } = useSelector((state: RootState) => state.deviation);
 
-  // Clear highlight animation after 2 seconds
+  const [userReviewedFields, setUserReviewedFields] = useState<string[]>([]);
+
+  // Clear highlight animation after 2 seconds and update reviewed fields
   useEffect(() => {
     if (ui.fieldsRecentlyChanged.length > 0) {
+      setUserReviewedFields(prev => {
+        const newSet = new Set(prev);
+        ui.fieldsRecentlyChanged.forEach(f => newSet.add(f));
+        return Array.from(newSet);
+      });
       const timer = setTimeout(() => {
         dispatch(clearFieldsRecentlyChanged());
       }, 2000);
@@ -21,7 +29,22 @@ export const DeviationForm: React.FC = () => {
   }, [ui.fieldsRecentlyChanged, dispatch]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    dispatch(updateFormField({ field: e.target.name as any, value: e.target.value }));
+    const field = e.target.name;
+    dispatch(updateFormField({ field: field as any, value: e.target.value }));
+    if (!userReviewedFields.includes(field)) {
+      setUserReviewedFields(prev => [...prev, field]);
+    }
+  };
+
+  const FieldStatus = ({ field }: { field: string }) => {
+    if (ui.statusBadge !== 'Ready for Review') return null;
+    if (userReviewedFields.includes(field)) {
+      return <span className="field-status reviewed"><CheckCircle2 size={12} /> Reviewed</span>;
+    }
+    if ((form as any)[field]) {
+      return <span className="field-status ai-suggested"><Sparkles size={12} /> AI Suggested</span>;
+    }
+    return null;
   };
 
   const getHighlightClass = (field: string) => 
@@ -52,7 +75,7 @@ export const DeviationForm: React.FC = () => {
         </div>
 
         <div className="form-group">
-          <label>Title</label>
+          <label>Title <FieldStatus field="title" /></label>
           <input 
             type="text" 
             name="title" 
@@ -65,7 +88,7 @@ export const DeviationForm: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-group" style={{ flex: 1 }}>
-            <label>Site/Plant</label>
+            <label>Site/Plant <FieldStatus field="site_plant" /></label>
             <input 
               type="text" 
               name="site_plant" 
@@ -75,7 +98,7 @@ export const DeviationForm: React.FC = () => {
             />
           </div>
           <div className="form-group" style={{ flex: 1 }}>
-            <label>Date of Occurrence</label>
+            <label>Date of Occurrence <FieldStatus field="date_of_occurrence" /></label>
             <input 
               type="text" 
               name="date_of_occurrence" 
@@ -89,7 +112,7 @@ export const DeviationForm: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-group" style={{ flex: 1 }}>
-            <label>Source</label>
+            <label>Source <FieldStatus field="source" /></label>
             <select name="source" value={form.source} onChange={handleChange} className={getHighlightClass('source')}>
               <option value="">Select source...</option>
               <option value="Production Floor">Production Floor</option>
@@ -101,7 +124,7 @@ export const DeviationForm: React.FC = () => {
             </select>
           </div>
           <div className="form-group" style={{ flex: 1 }}>
-            <label>Batch/Lot Number</label>
+            <label>Batch/Lot Number <FieldStatus field="batch_lot_number" /></label>
             <input 
               type="text" 
               name="batch_lot_number" 
@@ -113,7 +136,7 @@ export const DeviationForm: React.FC = () => {
         </div>
 
         <div className="form-group">
-          <label>Related Product/Material</label>
+          <label>Related Product/Material <FieldStatus field="related_product_material" /></label>
           <input 
             type="text" 
             name="related_product_material" 
@@ -129,7 +152,7 @@ export const DeviationForm: React.FC = () => {
         </div>
 
         <div className="form-group">
-          <label>Detailed Description</label>
+          <label>Detailed Description <FieldStatus field="detailed_description" /></label>
           <textarea 
             name="detailed_description" 
             value={form.detailed_description} 
@@ -145,7 +168,7 @@ export const DeviationForm: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-group" style={{ flex: 1 }}>
-            <label>Initial Severity</label>
+            <label>Initial Severity <FieldStatus field="initial_severity" /></label>
             <select name="initial_severity" value={form.initial_severity} onChange={handleChange} className={getHighlightClass('initial_severity')}>
               <option value="">Select...</option>
               <option value="Critical">Critical</option>
@@ -154,7 +177,7 @@ export const DeviationForm: React.FC = () => {
             </select>
           </div>
           <div className="form-group" style={{ flex: 1 }}>
-            <label>Initial Impact</label>
+            <label>Initial Impact <FieldStatus field="initial_impact" /></label>
             <select name="initial_impact" value={form.initial_impact} onChange={handleChange} className={getHighlightClass('initial_impact')}>
               <option value="">Select...</option>
               <option value="Critical Impact">Critical Impact</option>

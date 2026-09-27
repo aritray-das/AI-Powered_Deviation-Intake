@@ -29,7 +29,7 @@ interface DeviationState {
   form: DeviationForm;
   chatHistory: ChatMessage[];
   ui: {
-    statusBadge: 'Draft' | 'Ready to Commit' | 'Logged';
+    statusBadge: 'Draft' | 'Ready for Review' | 'Logged';
     isProcessing: boolean;
     isExtracting: boolean;
     isEditing: boolean;
@@ -169,7 +169,7 @@ const deviationSlice = createSlice({
     });
     builder.addCase(processText.fulfilled, (state, action) => {
       state.ui.isProcessing = false;
-      state.ui.statusBadge = 'Ready to Commit';
+      state.ui.statusBadge = 'Ready for Review';
       
       const { text, data } = action.payload;
       
